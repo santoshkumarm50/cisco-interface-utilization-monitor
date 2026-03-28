@@ -1,8 +1,7 @@
 Cisco Interface Utilization Monitoring using Ansible
+
 📌 Overview
-
 This project automates monitoring of Cisco interface utilization across multiple devices using Ansible.
-
 It is designed to help network teams proactively detect high utilization, avoid congestion, and maintain optimal performance.
 
 🚀 Features
@@ -35,7 +34,7 @@ Data Processing Logic
      ├── Email Alerts
      └── Zoho Cliq Notifications
 
-## 📂 Project Structure
+📂 Project Structure
 
 playbooks/     → Core automation logic  
 vars/          → Interface mapping & bandwidth config  
