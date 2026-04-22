@@ -1,0 +1,13 @@
+---
+- name: Initialize interface utilization log
+  hosts: localhost
+  gather_facts: no
+
+  vars:
+    util_log_file: "{{ playbook_dir }}/../ansible_interface_util.log"
+
+  tasks:
+    - name: Create fresh interface utilization log
+      copy:
+        dest: "{{ util_log_file }}"
+        content: ""
