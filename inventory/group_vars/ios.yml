@@ -1,0 +1,13 @@
+ansible_user: test
+ansible_password: "test@123"
+ansible_become: yes
+ansible_become_method: enable
+ansible_become_password: "test@123"
+ansible_connection: network_cli
+ansible_network_os: cisco.ios.ios
+ansible_ssh_common_args: >
+  -o PreferredAuthentications=password,keyboard-interactive
+  -o PubkeyAuthentication=no
+  -o KbdInteractiveAuthentication=yes
+  -o NumberOfPasswordPrompts=1
+  -o StrictHostKeyChecking=no
