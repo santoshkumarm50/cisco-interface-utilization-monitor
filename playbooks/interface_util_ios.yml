@@ -1,1 +1,81 @@
 
+---
+- name: Collect Cisco IOS Interface Utilization (failure-safe)
+  hosts: ios
+  gather_facts: no
+  connection: network_cli
+  serial: 5
+  any_errors_fatal: false
+
+  vars:
+    interface_name: "Twe1/0/1"
+
+  tasks:
+
+    - block:
+
+        - name: Disable terminal paging
+          cisco.ios.ios_command:
+            commands:
+              - terminal length 0
+
+        - name: Fetch interface operational status
+          cisco.ios.ios_command:
+            commands:
+              - "show interface {{ interface_name }} | include line protocol"
+          register: intf_status_raw
+
+        - name: Fetch interface traffic rate
+          cisco.ios.ios_command:
+            commands:
+              - "show interface {{ interface_name }} | include rate"
+          register: rate_output
+
+        - name: Extract raw bps and pps values
+          set_fact:
+            input_bps_raw: "{{ rate_output.stdout[0] | regex_search('input rate (\\d+) bits/sec', '\\1') | first | default('0') }}"
+            input_pps: "{{ rate_output.stdout[0] | regex_search('input rate \\d+ bits/sec, (\\d+) packets/sec', '\\1') | first | default('0') }}"
+            output_bps_raw: "{{ rate_output.stdout[0] | regex_search('output rate (\\d+) bits/sec', '\\1') | first | default('0') }}"
+            output_pps: "{{ rate_output.stdout[0] | regex_search('output rate \\d+ bits/sec, (\\d+) packets/sec', '\\1') | first | default('0') }}"
+
+        - name: Convert bps to Mbps
+          set_fact:
+            input_mbps: "{{ (input_bps_raw | float / 1000000) | round(2) }}"
+            output_mbps: "{{ (output_bps_raw | float / 1000000) | round(2) }}"
+
+        - name: Determine interface UP/DOWN status
+          set_fact:
+            interface_state: >-
+              {% if 'is up, line protocol is up' in intf_status_raw.stdout[0] %}
+              UP
+              {% else %}
+              DOWN
+              {% endif %}
+
+        - name: Set interface utilization SUCCESS
+          set_fact:
+            interface_util_result:
+              device: "{{ inventory_hostname }}"
+              ip: "{{ ansible_host | default('NA') }}"
+              vendor: "IOS"
+              location: "{{ group_names | intersect(['dc','dr','branch']) | first | default('unknown') }}"
+              interface: "{{ interface_name }}"
+              status: "{{ interface_state }}"
+              input: "{{ input_mbps }} Mbps ({{ input_pps }} pps)"
+              output: "{{ output_mbps }} Mbps ({{ output_pps }} pps)"
+
+      rescue:
+
+        - name: Set interface utilization FAILED
+          set_fact:
+            interface_util_result:
+              device: "{{ inventory_hostname }}"
+              ip: "{{ ansible_host | default('NA') }}"
+              vendor: "IOS"
+              location: "{{ group_names | intersect(['dc','dr','branch']) | first | default('unknown') }}"
+              interface: "{{ interface_name }}"
+              status: "DOWN"
+              input: "NA"
+              output: "NA"
+              reason: "{{ ansible_failed_result.msg | default('command execution failed') }}"
+
