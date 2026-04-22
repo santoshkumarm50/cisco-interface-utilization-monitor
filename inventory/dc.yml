@@ -1,0 +1,4 @@
+dc:
+  hosts:
+    DC_SW_WAN_001_R03_R04:
+      ansible_host: 1.1.1.2
