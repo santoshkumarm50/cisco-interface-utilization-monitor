@@ -2,5 +2,7 @@
 # Author: Santosh Kumar Mohapatra
 # Description: Collects interface stats and calculates utilization
 
-# include
 ---
+- import_playbook: init_interface_util_log.yml
+- import_playbook: interface_util_ios.yml
+- import_playbook: send_interface_util_mail.yml
