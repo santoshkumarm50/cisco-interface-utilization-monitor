@@ -1,1 +1,40 @@
+---
+- name: Send interface utilization email (mailx)
+  hosts: localhost
+  gather_facts: no
+
+  vars:
+    util_log_file: "{{ playbook_dir }}/../ansible_interface_util.log"
+    mail_to: "xyz@xyz.com"
+    mail_from: "xyz@xyz.com"
+    mail_subject: "Internet Utilization Report - {{ lookup('pipe','date \"+%F %T\"') }}"
+
+  tasks:
+
+    - name: Write interface utilization report
+      copy:
+       dest: "{{ util_log_file }}"
+       content: |
+        Dear Team,
+        Please find the details as below.
+        ======================================================================
+        Internet Bandwidth Utilization
+        Date: {{ lookup('pipe','date "+%F %T"') }}
+        ======================================================================
+        DEVICE (IP) | VENDOR | LOCATION | INTERFACE | STATUS | INPUT | OUTPUT
+        ----------------------------------------------------------------------
+        {% for h in groups['ios'] %}
+        {% if hostvars[h].interface_util_result is defined %}
+        {{ hostvars[h].interface_util_result.device }} ({{ hostvars[h].interface_util_result.ip }}) | {{ hostvars[h].interface_util_result.vendor }} | {{ hostvars[h].interface_util_result.location }} | {{ hostvars[h].interface_util_result.interface }} | {{ hostvars[h].interface_util_result.status }} | IN: {{ hostvars[h].interface_util_result.input }} | OUT: {{ hostvars[h].interface_util_result.output }}
+        {% endif %}
+        {% endfor %}
+
+        Regards,
+        Ansible Automation Admin
+
+    - name: Send interface utilization email
+      ansible.builtin.shell: |
+        mailx -r "{{ mail_from }}" \
+              -s "{{ mail_subject }}" \
+              "{{ mail_to }}" < "{{ util_log_file }}"
 
