@@ -1,0 +1,4 @@
+ios:
+  hosts:
+    DC_SW_WAN_001_R03_R04:
+    DR_SW_WAN_001_R03_R04:
